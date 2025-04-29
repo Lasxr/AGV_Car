@@ -1,4 +1,20 @@
 #include <Arduino.h>
+#include <Wifi.h>
+#include <PubSubClient.h>
+
+
+//-----Wifi-----
+WiFiClient wifiClient;
+PubSubClient mqttclient(wifiClient);
+const char *ssid = "Atsc-2.4G"; 
+const char *password = "1245@atsc"; 
+const char *mqtt_broker = "192.168.100.8"; 
+const char *topic = "AGV/MQTTX/01"; 
+const int mqttPort = 1883;
+const char *mqtt_client_id = "Inwza007";
+
+
+String data_in;
 
 #define MR_IN1 12       // Back Right Motor
 #define MR_IN2 13
@@ -33,6 +49,36 @@ uint8_t FL_Speed = 125;
 // IR Sensor Pins
 #define IR_LEFT 23
 #define IR_RIGHT 34
+
+void callback(char *topic, byte *payload, unsigned int length);
+
+
+void mqtt_setup() {
+  Serial.println("Connecting WiFi");
+  WiFi.mode(WIFI_STA);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi connected");
+
+  Serial.println("Connecting MQTT");
+  mqttclient.setServer(mqtt_broker, mqttPort);
+  mqttclient.setCallback(callback);
+
+  while (!mqttclient.connected()) {
+    Serial.printf("The client %s connects to the MQTT broker\n", mqtt_client_id);
+    if (mqttclient.connect(mqtt_client_id)) {
+      Serial.println("MQTT connected");
+    } else {
+      Serial.print("failed with state ");
+      Serial.println(mqttclient.state());
+      delay(2000);
+    }
+  }
+  mqttclient.subscribe(topic);
+}
 
 void setup() {
 
@@ -69,6 +115,8 @@ void setup() {
   analogWrite(FR_ENB, FR_Speed); // Front Right Motor
   analogWrite(BL_ENB, BL_Speed); // Back Left Motor
   analogWrite(FL_ENA, FL_Speed); // Front Left Motor
+
+  mqtt_setup();
 
 }
 
@@ -129,7 +177,7 @@ void Right(int Delay) {
   delay(Delay);
 }
 
-void Stop(int Delay) {
+void StopCar(int Delay) {
   digitalWrite(MR_IN1, LOW);  // Back Right Motor
   digitalWrite(MR_IN2, LOW);
   digitalWrite(MR_IN3, LOW);   // Front Right Motor
@@ -229,25 +277,25 @@ void RotateRight(int Delay) {
 
 void Check_Car() {
   Forward(1000);
-  Stop(1000);
+  StopCar(1000);
   Backward(1000);
-  Stop(1000);
+  StopCar(1000);
   Left(1000);
-  Stop(1000);
+  StopCar(1000);
   Right(1000);
-  Stop(1000);
+  StopCar(1000);
   BackLeft(1000);
-  Stop(1000);
+  StopCar(1000);
   BackRight(1000);
-  Stop(1000);
+  StopCar(1000);
   ForwardLeft(1000);
-  Stop(1000);
+  StopCar(1000);
   ForwardRight(1000);
-  Stop(1000);
+  StopCar(1000);
   RotateLeft(1000);
-  Stop(1000);
+  StopCar(1000);
   RotateRight(1000);
-  Stop(1000);
+  StopCar(1000);
 }
 
 void read_ir() {
@@ -261,7 +309,54 @@ void read_ir() {
   }
 }
 
+void check_command(char x){
+  switch (x) {
+    case 'f':
+      Serial.println("Go forward");
+      Forward(100);
+      break;
+    case 'b':
+      Serial.println("Go backward");
+      Backward(100);
+      break;
+    case 'l':
+      Serial.println("Turn left");
+      Left(100);
+      break;
+    case 'r':
+      Serial.println("Turn right");
+      Right(100);
+      break;
+    case 's':
+      Serial.println("Stop");
+      StopCar(100);
+      break;
+    default:
+      Serial.println("Unknown command");
+  }
+}
 
-void loop() {
-  read_ir();
+void callback(char *topic, byte *payload, unsigned int length) {
+  payload[length] = '\0';
+  String topic_str = topic;
+  String payload_str = (char *)payload;
+  data_in = payload_str;
+  Serial.println(data_in);
+  if (data_in.length() > 0) {
+    data_in.trim();
+    int count = data_in.length();
+    for (int i = 0; i < count; i++) {
+      check_command(data_in[i]);
+    }
+    StopCar(0);
+  }
+}
+
+void mqtt_run() {
+  mqttclient.loop();
+}
+
+void loop()
+{
+  mqtt_run();
 }
