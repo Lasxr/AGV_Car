@@ -38,17 +38,20 @@ String data_in;
 int L_fornt_led = 16;
 int R_fornt_led = 17;
 
+//Buzzer
+int Buzzer = 18;
 
 // Motor Speed
 uint8_t BR_Speed = 125; 
-uint8_t BL_Speed = 125; 
+uint8_t BL_Speed = 90; 
 uint8_t FR_Speed = 125; 
-uint8_t FL_Speed = 125; 
+uint8_t FL_Speed = 90; 
 
 
 // IR Sensor Pins
 #define IR_LEFT 23
 #define IR_RIGHT 34
+bool ir_L, ir_R;
 
 void callback(char *topic, byte *payload, unsigned int length);
 
@@ -110,14 +113,24 @@ void setup() {
   pinMode(IR_LEFT, INPUT);
   pinMode(IR_RIGHT, INPUT);
 
+  //Buzzer
+  pinMode(Buzzer, OUTPUT);
 
   analogWrite(BR_ENA, BR_Speed); // Back Right Motor
   analogWrite(FR_ENB, FR_Speed); // Front Right Motor
   analogWrite(BL_ENB, BL_Speed); // Back Left Motor
   analogWrite(FL_ENA, FL_Speed); // Front Left Motor
 
-  mqtt_setup();
+  digitalWrite(Buzzer, 1);
+  delay(100);
+  digitalWrite(Buzzer, 0);
+  delay(100);
+  digitalWrite(Buzzer, 1);
+  delay(100);
+  digitalWrite(Buzzer, 0);
 
+  mqtt_setup();
+  
 }
 
 void Forward(int Delay) {
@@ -247,7 +260,7 @@ void ForwardRight(int Delay) {
   delay(Delay);
 }
 
-void RotateLeft(int Delay) {
+void TurnLeft(int Delay) {
   digitalWrite(MR_IN1, HIGH);  // Back Right Motor
   digitalWrite(MR_IN2, LOW);
   digitalWrite(MR_IN3, HIGH);   // Front Right Motor
@@ -261,7 +274,7 @@ void RotateLeft(int Delay) {
   delay(Delay);
 }
 
-void RotateRight(int Delay) {
+void TurnRight(int Delay) {
   digitalWrite(MR_IN1, LOW);  // Back Right Motor
   digitalWrite(MR_IN2, HIGH);
   digitalWrite(MR_IN3, LOW);   // Front Right Motor
@@ -273,6 +286,18 @@ void RotateRight(int Delay) {
   digitalWrite(ML_IN4, LOW);
 
   delay(Delay);
+}
+
+void Beep(int Round, int Delay){
+  for (int  i = 0; i < Round; i++)
+  {
+    digitalWrite(Buzzer, 1);
+    delay(Delay);
+    digitalWrite(Buzzer, 0);
+    delay(Delay);
+
+  }
+  
 }
 
 void Check_Car() {
@@ -292,9 +317,9 @@ void Check_Car() {
   StopCar(1000);
   ForwardRight(1000);
   StopCar(1000);
-  RotateLeft(1000);
+  TurnLeft(1000);
   StopCar(1000);
-  RotateRight(1000);
+  TurnRight(1000);
   StopCar(1000);
 }
 
@@ -307,6 +332,11 @@ void read_ir() {
     Serial.println(digitalRead(IR_LEFT));
     delay(100);
   }
+}
+
+void val_IR(){
+  ir_L = digitalRead(IR_LEFT);
+  ir_R = digitalRead(IR_RIGHT);
 }
 
 void check_command(char x){
@@ -356,7 +386,115 @@ void mqtt_run() {
   mqttclient.loop();
 }
 
+void Trackline(){
+  while (1)
+  {
+    val_IR();
+    if(ir_L == 1 && ir_R == 1){
+      StopCar(0);
+      break;
+    }else if(ir_L == 0 && ir_R == 0){
+      Forward(0);
+    }else if(ir_L == 1 && ir_R == 0){
+      TurnLeft(0);
+    }else if(ir_L == 0 && ir_R == 1){
+      TurnRight(0);
+    }
+  }
+  StopCar(0);
+}
+
+void Forward_cross(int time){
+  while (1)
+  {
+    Forward(0);
+    delay(time);
+    StopCar(0);
+    break;
+  }
+  StopCar(0);
+}
+
+void Back_cross(int time){
+  while (1)
+  {
+    Backward(0);
+    delay(time);
+    StopCar(0);
+    break;
+  }
+  StopCar(0);
+}
+
+void Track_forward() {
+  while (1)
+  {
+    val_IR();
+    if(ir_L == 1 && ir_R == 1){
+      StopCar(0);
+      break;
+    }else if(ir_L == 0 && ir_R == 0){
+      Forward(0);
+    }else if(ir_L == 1 && ir_R == 0){
+      TurnLeft(0);
+    }else if(ir_L == 0 && ir_R == 1){
+      TurnRight(0);
+    }
+  }
+  StopCar(0);
+}
+
+void Track_backward() {
+  while (1)
+  {
+    val_IR();
+    if(ir_L == 1 && ir_R == 1){
+      StopCar(0);
+      break;
+    }else if(ir_L == 0 && ir_R == 0){
+      Backward(0);
+    }else if(ir_L == 1 && ir_R == 0){
+      TurnLeft(0);
+    }else if(ir_L == 0 && ir_R == 1){
+      TurnRight(0);
+    }
+  }
+  StopCar(0);
+}
+
+void Track_left(int time){
+  Forward(500);
+  TurnLeft(0);
+  delay(time);
+  StopCar(0);
+}
+
+void Track_right(int time){
+  Forward(500);
+  TurnRight(0);
+  delay(time);
+  StopCar(0);
+}
+
 void loop()
 {
-  mqtt_run();
+  Track_forward();
+  StopCar(1000);
+  Beep(3, 100);
+
+  Forward_cross(500);
+  StopCar(1000);
+  Beep(3, 100);
+
+  Track_forward();
+  StopCar(1000);
+  Beep(3, 100);
+
+  Track_left(750);
+  StopCar(1000);
+  Beep(3, 100);
+
+  Track_forward();  
+  StopCar(1000);
+  Beep(3, 100);
 }
