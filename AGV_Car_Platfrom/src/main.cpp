@@ -49,8 +49,8 @@ uint8_t FL_Speed = 90;
 
 
 // IR Sensor Pins
-#define IR_LEFT 23
-#define IR_RIGHT 34
+#define IR_LEFT 35
+#define IR_RIGHT 34                                                                                                                                                                                                                                                                                      
 bool ir_L, ir_R;
 
 void callback(char *topic, byte *payload, unsigned int length);
@@ -288,7 +288,7 @@ void TurnRight(int Delay) {
   delay(Delay);
 }
 
-void Beep(int Round, int Delay){
+void Beep(int Round, int Delay){ 
   for (int  i = 0; i < Round; i++)
   {
     digitalWrite(Buzzer, 1);
@@ -478,23 +478,5 @@ void Track_right(int time){
 
 void loop()
 {
-  Track_forward();
-  StopCar(1000);
-  Beep(3, 100);
-
-  Forward_cross(500);
-  StopCar(1000);
-  Beep(3, 100);
-
-  Track_forward();
-  StopCar(1000);
-  Beep(3, 100);
-
-  Track_left(750);
-  StopCar(1000);
-  Beep(3, 100);
-
-  Track_forward();  
-  StopCar(1000);
-  Beep(3, 100);
+  Check_Car();
 }
