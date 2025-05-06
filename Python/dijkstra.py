@@ -32,11 +32,15 @@ def dijkstra(graph,start,end):
     return path,distances[end]
 
 graph = {
-    'A':{'B':6,'D':1},
-    'B': {'A': 6, "E": 2, "C": 5},
-    'C': {'B': 5, "E": 5},
-    'D': {'A': 1, "B": 2, "E": 1},
-    'E': {'D': 1, "B": 2, "C": 5}
+    'A':{'D':1},
+    'B': {'C': 1, "E": 1},
+    'C': {'B': 1, "F": 1, "I": 2},
+    'D': {'A': 1, "E": 1},
+    'E': {'D': 1, "B": 1},
+    'F': {'I': 1, "C": 1},
+    'G': {'H': 1, "I": 1},
+    'H': {'G': 1, "I": 1},
+    'I': {'G': 2, "H": 1, "F": 1, "C": 2}
 }
 
-print(dijkstra(graph,'A','C'))
+print(dijkstra(graph,'A','G'))
