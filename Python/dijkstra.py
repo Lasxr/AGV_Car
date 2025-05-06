@@ -1,7 +1,3 @@
-from tkinter.dnd import dnd_start
-
-from Tools.scripts.findlinksto import visit
-
 
 def dijkstra(graph,start,end):
     distances = {node: float('infinity') for node in graph}

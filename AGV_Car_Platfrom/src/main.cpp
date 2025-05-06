@@ -43,9 +43,9 @@ int Buzzer = 18;
 
 // Motor Speed
 uint8_t BR_Speed = 125; 
-uint8_t BL_Speed = 100; 
+uint8_t BL_Speed = 95; 
 uint8_t FR_Speed = 125; 
-uint8_t FL_Speed = 100; 
+uint8_t FL_Speed = 95; 
 
 
 // IR Sensor Pins
@@ -474,16 +474,56 @@ void Track_right(int time){
   StopCar(0);
 }
 
+void To_Line() {
+  while (1)
+  {
+    val_IR();
+    if(ir_L == 1 && ir_R == 1){
+      StopCar(0);
+      break;
+    }else if(ir_L == 0 && ir_R == 0){
+      Forward(0);
+    }else if(ir_L == 1 && ir_R == 0){
+      TurnLeft(0);
+    }else if(ir_L == 0 && ir_R == 1){
+      TurnRight(0);
+    }
+  }
+  StopCar(0);
+}
+
+void End_proses(){
+  while (1)
+  {
+    StopCar(0);
+  }
+  
+}
+
 void loop()
 {
   Track_forward();
   Beep(2, 100);
-  Forward_cross(800);
+  Forward_cross(500);
   Beep(2, 100);
   Track_forward();
   Beep(2, 100);
-  Forward_cross(800);
+  Forward_cross(1000);
   Beep(2, 100);
   Track_left(750);
+  Beep(2, 100);
+  To_Line();
+  Beep(2, 100);
+  Forward_cross(1000);
+  Beep(2, 100);
+  Track_forward();
+  Beep(2, 100);
+  Forward_cross(1000);
+  Beep(2, 100);
+  Track_right(750);
+  Beep(2, 100);
+  To_Line();
+  Beep(3, 100);
+  End_proses();
 
 }
